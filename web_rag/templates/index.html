@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG 可视化检索系统</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            border-radius: 0 0 1rem 1rem;
+            margin-bottom: 2rem;
+        }
+        .search-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .result-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+        .result-card.low-score {
+            border-left-color: #e74c3c;
+        }
+        .result-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .metadata {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 1rem;
+        }
+        .btn-primary {
+            background: #667eea;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+        .spinner {
+            display: none;
+        }
+        .spinner.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header text-center">
+        <div class="container">
+            <h1 class="display-4">RAG 可视化检索系统</h1>
+            <p class="lead">基于向量数据库的智能文档检索</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 搜索区域 -->
+        <div class="search-card mb-4">
+            <h2 class="mb-4">🔍 智能检索</h2>
+            <form id="search-form">
+                <div class="mb-3">
+                    <label for="query" class="form-label">查询词</label>
+                    <input type="text" class="form-control form-control-lg" id="query" name="query"
+                           placeholder="例如：唇读 深度学习 论文" required>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                        <span id="search-text">开始检索</span>
+                        <span id="search-spinner" class="spinner spinner-border spinner-border-sm ms-2"></span>
+                    </button>
+                    <button type="button" id="check-qdrant" class="btn btn-secondary btn-lg">
+                        检查 Qdrant
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 文件上传区域 -->
+        <div class="search-card mb-4">
+            <h2 class="mb-4">📁 文件上传</h2>
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="file" class="form-label">选择 PDF 文件</label>
+                    <input type="file" class="form-control" id="file" name="file" accept=".pdf" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span id="upload-text">上传并入库</span>
+                    <span id="upload-spinner" class="spinner spinner-border spinner-border-sm ms-2"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div id="results" class="mb-4">
+            <!-- 结果将通过 JavaScript 动态添加 -->
+        </div>
+
+        <!-- Qdrant 检查结果 -->
+        <div id="qdrant-result" class="mb-4">
+            <!-- 检查结果将通过 JavaScript 动态添加 -->
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义脚本 -->
+    <script>
+        // 搜索表单提交
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const query = document.getElementById('query').value.trim();
+            if (!query) return;
+            
+            // 显示加载状态
+            document.getElementById('search-text').textContent = '检索中...';
+            document.getElementById('search-spinner').classList.add('show');
+            
+            // 清空结果
+            document.getElementById('results').innerHTML = '';
+            
+            // 发送请求
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏加载状态
+                document.getElementById('search-text').textContent = '开始检索';
+                document.getElementById('search-spinner').classList.remove('show');
+                
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => {
+                document.getElementById('search-text').textContent = '开始检索';
+                document.getElementById('search-spinner').classList.remove('show');
+                showError('检索失败，请稍后重试');
+            });
+        });
+
+        // 检查 Qdrant
+        document.getElementById('check-qdrant').addEventListener('click', function() {
+            const button = this;
+            const originalText = button.textContent;
+            button.textContent = '检查中...';
+            button.disabled = true;
+            
+            fetch('/check_qdrant')
+            .then(response => response.json())
+            .then(data => {
+                button.textContent = originalText;
+                button.disabled = false;
+                
+                if (data.success) {
+                    displayQdrantResult(data.output);
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => {
+                button.textContent = originalText;
+                button.disabled = false;
+                showError('检查失败，请稍后重试');
+            });
+        });
+
+        // 上传表单提交
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // 显示加载状态
+            document.getElementById('upload-text').textContent = '上传中...';
+            document.getElementById('upload-spinner').classList.add('show');
+            
+            // 发送请求
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏加载状态
+                document.getElementById('upload-text').textContent = '上传并入库';
+                document.getElementById('upload-spinner').classList.remove('show');
+                
+                if (data.success) {
+                    showSuccess(`文件上传成功！共生成 ${data.chunks} 个向量`);
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => {
+                document.getElementById('upload-text').textContent = '上传并入库';
+                document.getElementById('upload-spinner').classList.remove('show');
+                showError('上传失败，请稍后重试');
+            });
+        });
+
+        // 显示检索结果
+        function displayResults(data) {
+            const resultsContainer = document.getElementById('results');
+            
+            if (data.total === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-info" role="alert">
+                        未找到相关内容
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <h2 class="mb-3">📊 检索结果 (${data.total} 条)</h2>
+                <p class="text-muted">查询词：${data.query}</p>
+            `;
+            
+            data.results.forEach((result, index) => {
+                const isLowScore = result.score < 0.5;
+                const cardClass = isLowScore ? 'result-card low-score' : 'result-card';
+                
+                html += `
+                    <div class="${cardClass}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h3>结果 ${index + 1}</h3>
+                            <span class="badge ${isLowScore ? 'bg-danger' : 'bg-success'}">
+                                相似度: ${result.score}
+                            </span>
+                        </div>
+                        <div class="result-content mt-2">
+                            ${result.content}
+                        </div>
+                        <div class="metadata">
+                            <strong>元数据：</strong>
+                            <pre>${JSON.stringify(result.metadata, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+
+        // 显示 Qdrant 检查结果
+        function displayQdrantResult(output) {
+            const container = document.getElementById('qdrant-result');
+            container.innerHTML = `
+                <div class="alert alert-info" role="alert">
+                    <h4 class="alert-heading">Qdrant 检查结果</h4>
+                    <pre class="mt-2">${output}</pre>
+                </div>
+            `;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const container = document.getElementById('results');
+            container.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <strong>错误：</strong> ${message}
+                </div>
+            `;
+        }
+
+        // 显示成功信息
+        function showSuccess(message) {
+            const container = document.getElementById('results');
+            container.innerHTML = `
+                <div class="alert alert-success" role="alert">
+                    <strong>成功：</strong> ${message}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
