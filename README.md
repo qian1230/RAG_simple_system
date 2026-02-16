@@ -2,6 +2,10 @@
 
 一个基于向量数据库的智能文档检索系统，支持 PDF 导入、向量嵌入和智能检索功能。
 
+## 项目效果展示
+![RAG系统运行效果](https://github.com/qian1230/RAG_simple_system/blob/main/img1.png)
+![RAG系统运行效果](https://github.com/qian1230/RAG_simple_system/blob/main/img2.png)
+
 ## 功能特点
 
 ### ✅ 核心功能
