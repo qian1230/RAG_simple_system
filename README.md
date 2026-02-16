@@ -1,6 +1,15 @@
 # RAG 智能检索系统
 
+<<<<<<< HEAD
 一个基于向量数据库的智能文档检索系统，支持 PDF 导入、向量嵌入、智能检索和 ReAct 智能体功能。
+=======
+一个基于向量数据库的智能文档检索系统，支持 PDF 导入、向量嵌入和智能检索功能。
+本项目基于 [hello-agents](https://github.com/datawhalechina/hello-agents) 项目开发，是一个轻量、可运行的RAG（检索增强生成）系统，支持PDF解析、向量入库、精准语义检索，基于DashScope和Qdrant实现。
+
+## 项目效果展示
+![RAG系统运行效果](https://github.com/qian1230/RAG_simple_system/blob/main/img1.png)
+![RAG系统运行效果](https://github.com/qian1230/RAG_simple_system/blob/main/img2.png)
+>>>>>>> 004c315de8803e28d716cca592120b34c52f39f6
 
 ## 功能特点
 
@@ -28,7 +37,7 @@
 
 ## 环境要求
 
-- Python 3.8+
+- Python 3.10+
 - pip 20.0+
 
 ## 安装步骤
@@ -144,6 +153,11 @@ python check_qdrant.py
 - **智能问答响应时间**：约 2-5 秒/问题
 - **准确率**：检索结果相关性 > 0.8
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 004c315de8803e28d716cca592120b34c52f39f6
 ## 示例使用
 
 ### 导入 PDF
@@ -168,7 +182,7 @@ python check_qdrant.py
 ## 项目结构
 
 ```
-hello_llm/
+main/
 ├── 8_RAG.py              # 核心 RAG 功能
 ├── check_qdrant.py       # Qdrant 检查工具
 ├── web_rag/              # Web 可视化应用
@@ -177,10 +191,14 @@ hello_llm/
 │   │   └── index.html    # 主页面
 │   ├── uploads/          # 文件上传目录
 │   └── requirements.txt  # Web 依赖
+<<<<<<< HEAD
 ├── react/                # ReAct 智能体
 │   ├── react_agent.py    # ReAct 智能体实现
 │   └── llm_client.py     # LLM 客户端
 ├── hello_agents/         # 核心库
+=======
+├── hello_agents/         # 核心库(基于hello_agents)
+>>>>>>> 004c315de8803e28d716cca592120b34c52f39f6
 │   ├── memory/           # 内存管理
 │   │   ├── embedding.py  # 嵌入模型
 │   │   └── storage/      # 存储实现
@@ -212,6 +230,7 @@ hello_llm/
 - **重叠大小**：50 Token
 - **最小块长度**：10 字符
 
+<<<<<<< HEAD
 ### ReAct 智能体
 
 - **工具集**：RAGSearch（私有知识库检索）、BaiduSearch（Google 搜索）
@@ -219,8 +238,15 @@ hello_llm/
 - **提示词模板**：指导智能体优先使用私有知识库检索
 
 
+=======
+
+>>>>>>> 004c315de8803e28d716cca592120b34c52f39f6
 
 ## 联系方式
 
 如有问题，请联系18612214266@163.com。
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 004c315de8803e28d716cca592120b34c52f39f6
