@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG 可视化检索系统</title>
+    <title>增强型 RAG 智能问答系统</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- 自定义样式 -->
@@ -28,6 +28,18 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 2rem;
         }
+        .feature-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
         .result-card {
             background: white;
             border-radius: 0.5rem;
@@ -38,6 +50,14 @@
         }
         .result-card.low-score {
             border-left-color: #e74c3c;
+        }
+        .web-result-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #3498db;
         }
         .result-content {
             max-height: 300px;
@@ -55,35 +75,79 @@
         .btn-primary:hover {
             background: #764ba2;
         }
+        .btn-secondary {
+            background: #95a5a6;
+            border: none;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
         .spinner {
             display: none;
         }
         .spinner.show {
             display: inline-block;
         }
+        .web-result-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .web-result-summary {
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+        .web-result-link {
+            font-size: 0.9rem;
+            color: #3498db;
+        }
+        .web-result-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="header text-center">
         <div class="container">
-            <h1 class="display-4">RAG 可视化检索系统</h1>
-            <p class="lead">基于向量数据库的智能文档检索</p>
+            <h1 class="display-4">增强型 RAG 智能问答系统</h1>
+            <p class="lead">融合私有知识库、联网搜索与反思式推理的智能问答系统</p>
         </div>
     </div>
 
     <div class="container">
+        <!-- 功能特点 -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>📚 私有知识库</h3>
+                    <p>支持上传 PDF 文档，自动完成文档解析、文本分块、向量生成，并存储至云端向量数据库。</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>🔍 语义检索</h3>
+                    <p>在私有云端知识库中进行高精度语义检索，返回最相关的文档片段，作为回答的核心依据。</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>🌐 联网搜索</h3>
+                    <p>当私有知识库信息不足时，自动通过联网搜索获取公开网络信息，实现双重补充。</p>
+                </div>
+            </div>
+        </div>
+
         <!-- 搜索区域 -->
         <div class="search-card mb-4">
-            <h2 class="mb-4">🔍 智能检索</h2>
+            <h2 class="mb-4">🤖 智能问答</h2>
             <form id="search-form">
                 <div class="mb-3">
-                    <label for="query" class="form-label">查询词</label>
+                    <label for="query" class="form-label">您的问题</label>
                     <input type="text" class="form-control form-control-lg" id="query" name="query"
-                           placeholder="例如：唇读 深度学习 论文" required>
+                           placeholder="例如：唇读领域有哪些经典论文？" required>
                 </div>
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
-                        <span id="search-text">开始检索</span>
+                        <span id="search-text">智能回答</span>
                         <span id="search-spinner" class="spinner spinner-border spinner-border-sm ms-2"></span>
                     </button>
                     <button type="button" id="check-qdrant" class="btn btn-secondary btn-lg">
@@ -95,7 +159,7 @@
 
         <!-- 文件上传区域 -->
         <div class="search-card mb-4">
-            <h2 class="mb-4">📁 文件上传</h2>
+            <h2 class="mb-4">📁 知识库管理</h2>
             <form id="upload-form" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="file" class="form-label">选择 PDF 文件</label>
@@ -131,7 +195,7 @@
             if (!query) return;
             
             // 显示加载状态
-            document.getElementById('search-text').textContent = '检索中...';
+            document.getElementById('search-text').textContent = '处理中...';
             document.getElementById('search-spinner').classList.add('show');
             
             // 清空结果
@@ -148,7 +212,7 @@
             .then(response => response.json())
             .then(data => {
                 // 隐藏加载状态
-                document.getElementById('search-text').textContent = '开始检索';
+                document.getElementById('search-text').textContent = '智能回答';
                 document.getElementById('search-spinner').classList.remove('show');
                 
                 if (data.success) {
@@ -158,11 +222,13 @@
                 }
             })
             .catch(error => {
-                document.getElementById('search-text').textContent = '开始检索';
+                document.getElementById('search-text').textContent = '智能回答';
                 document.getElementById('search-spinner').classList.remove('show');
-                showError('检索失败，请稍后重试');
+                showError('处理失败，请稍后重试');
             });
         });
+
+
 
         // 检查 Qdrant
         document.getElementById('check-qdrant').addEventListener('click', function() {
@@ -228,6 +294,75 @@
         function displayResults(data) {
             const resultsContainer = document.getElementById('results');
             
+            if (data.total === 0 && !data.answer) {
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-info" role="alert">
+                        未找到相关内容
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <h2 class="mb-3">📊 智能问答结果</h2>
+                <p class="text-muted">问题：${data.query}</p>
+            `;
+            
+            // 显示 LLM 生成的回答
+            if (data.answer) {
+                html += `
+                    <div class="alert alert-success" role="alert">
+                        <h4 class="alert-heading">🤖 智能回答</h4>
+                        <p>${data.answer}</p>
+                    </div>
+                `;
+            }
+            
+            // 显示检索到的内容
+            if (data.retrieved_content) {
+                html += `
+                    <div class="alert alert-info" role="alert">
+                        <h4 class="alert-heading">📚 检索到的内容</h4>
+                        <pre class="mt-2">${data.retrieved_content}</pre>
+                    </div>
+                `;
+            }
+            
+            // 显示详细结果
+            if (data.results && data.results.length > 0) {
+                html += `<h3 class="mt-4">详细检索结果</h3>`;
+                
+                data.results.forEach((result, index) => {
+                    const isLowScore = result.score < 0.5;
+                    const cardClass = isLowScore ? 'result-card low-score' : 'result-card';
+                    
+                    html += `
+                        <div class="${cardClass}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h3>结果 ${index + 1}</h3>
+                                <span class="badge ${isLowScore ? 'bg-danger' : 'bg-success'}">
+                                    相似度: ${result.score}
+                                </span>
+                            </div>
+                            <div class="result-content mt-2">
+                                ${result.content}
+                            </div>
+                            <div class="metadata">
+                                <strong>元数据：</strong>
+                                <pre>${JSON.stringify(result.metadata, null, 2)}</pre>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            resultsContainer.innerHTML = html;
+        }
+
+        // 显示联网搜索结果
+        function displayWebSearchResults(data) {
+            const resultsContainer = document.getElementById('results');
+            
             if (data.total === 0) {
                 resultsContainer.innerHTML = `
                     <div class="alert alert-info" role="alert">
@@ -238,29 +373,16 @@
             }
             
             let html = `
-                <h2 class="mb-3">📊 检索结果 (${data.total} 条)</h2>
-                <p class="text-muted">查询词：${data.query}</p>
+                <h2 class="mb-3">🌐 联网搜索结果 (${data.total} 条)</h2>
+                <p class="text-muted">搜索词：${data.query}</p>
             `;
             
             data.results.forEach((result, index) => {
-                const isLowScore = result.score < 0.5;
-                const cardClass = isLowScore ? 'result-card low-score' : 'result-card';
-                
                 html += `
-                    <div class="${cardClass}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h3>结果 ${index + 1}</h3>
-                            <span class="badge ${isLowScore ? 'bg-danger' : 'bg-success'}">
-                                相似度: ${result.score}
-                            </span>
-                        </div>
-                        <div class="result-content mt-2">
-                            ${result.content}
-                        </div>
-                        <div class="metadata">
-                            <strong>元数据：</strong>
-                            <pre>${JSON.stringify(result.metadata, null, 2)}</pre>
-                        </div>
+                    <div class="web-result-card">
+                        <div class="web-result-title">${index + 1}. ${result.title}</div>
+                        <div class="web-result-summary">${result.summary}</div>
+                        <a href="${result.link}" class="web-result-link" target="_blank">${result.link}</a>
                     </div>
                 `;
             });

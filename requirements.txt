@@ -22,3 +22,13 @@ pymupdf==1.21.0
 # 其他
 jinja2==3.0.3
 werkzeug==2.0.3
+
+# 网页解析
+beautifulsoup4==4.11.1
+lxml==4.9.1
+
+# OpenAI 客户端
+openai==0.27.0
+
+# 搜索引擎 API
+serpapi==0.1.5

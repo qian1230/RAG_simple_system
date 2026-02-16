@@ -270,20 +270,37 @@ def _prompt_mqe(query: str, expansions: int = 2) -> List[str]:
         llm = HelloAgentsLLM(**{k: v for k, v in llm_config.items() if v})
 
         # MQE提示词
-        prompt = f"""
-        你是一个专业的查询扩展助手。请基于以下原始查询，生成{expansions}个不同的、语义相似的查询语句，用于向量数据库检索。
-        要求：
-        1. 每个查询保持与原始查询的核心语义一致
-        2. 表达方式不同，覆盖不同的关键词和句式
-        3. 仅返回查询语句，每行一个，不要添加额外说明
-        4. 语言与原始查询保持一致
+        messages = [{
+            "role": "user",
+            "content": f"""
+            你是一个专业的查询扩展助手。请基于以下原始查询，生成{expansions}个不同的、语义相似的查询语句，用于向量数据库检索。
+            要求：
+            1. 每个查询保持与原始查询的核心语义一致
+            2. 表达方式不同，覆盖不同的关键词和句式
+            3. 仅返回查询语句，每行一个，不要添加额外说明
+            4. 语言与原始查询保持一致
 
-        原始查询：{query}
-        """
+            原始查询：{query}
+            """
+        }]
 
         # 调用LLM生成扩展查询
-        response = llm.complete(prompt)
-        mqe_queries = [line.strip() for line in response.text.strip().split("\n") if line.strip()]
+        response = llm.think(messages, temperature=0.5)
+        if not response:
+            raise Exception("LLM未返回有效响应")
+        
+        # 处理响应，确保它是一个字符串
+        if isinstance(response, str):
+            response_text = response.strip()
+        else:
+            # 如果是生成器，尝试转换为字符串
+            try:
+                response_text = ''.join(response).strip()
+            except:
+                # 如果转换失败，返回原始查询
+                raise Exception("无法处理LLM响应")
+        
+        mqe_queries = [line.strip() for line in response_text.split("\n") if line.strip()]
 
         # 确保生成数量符合要求
         if len(mqe_queries) < expansions:
@@ -309,19 +326,35 @@ def _prompt_hyde(query: str) -> str:
         llm = HelloAgentsLLM(**{k: v for k, v in llm_config.items() if v})
 
         # HYDE提示词
-        prompt = f"""
-        你是一个专业的文档生成助手。请基于以下查询，生成一段假设的、相关的文档内容（约100-200字）。
-        要求：
-        1. 内容与查询高度相关，符合该主题的真实文档特征
-        2. 语言流畅，结构合理
-        3. 仅返回生成的文档内容，不要添加额外说明
+        messages = [{
+            "role": "user",
+            "content": f"""
+            你是一个专业的文档生成助手。请基于以下查询，生成一段假设的、相关的文档内容（约100-200字）。
+            要求：
+            1. 内容与查询高度相关，符合该主题的真实文档特征
+            2. 语言流畅，结构合理
+            3. 仅返回生成的文档内容，不要添加额外说明
 
-        查询：{query}
-        """
+            查询：{query}
+            """
+        }]
 
         # 调用LLM生成假设文档
-        response = llm.complete(prompt)
-        hyde_text = response.text.strip()
+        response = llm.think(messages, temperature=0.5)
+        if not response:
+            raise Exception("LLM未返回有效响应")
+        
+        # 处理响应，确保它是一个字符串
+        if isinstance(response, str):
+            hyde_text = response.strip()
+        else:
+            # 如果是生成器，尝试转换为字符串
+            try:
+                hyde_text = ''.join(response).strip()
+            except:
+                # 如果转换失败，返回空字符串
+                raise Exception("无法处理LLM响应")
+        
         print(f"[HYDE] 生成假设文档：{hyde_text[:100]}...")
         return hyde_text
     except Exception as e:
